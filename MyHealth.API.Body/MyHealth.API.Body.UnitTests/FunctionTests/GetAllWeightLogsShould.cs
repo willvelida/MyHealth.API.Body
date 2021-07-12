@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoFixture;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -46,15 +47,8 @@ namespace MyHealth.API.Body.UnitTests.FunctionTests
         {
             // Arrange
             List<mdl.WeightEnvelope> weightEnvelopes = new List<mdl.WeightEnvelope>();
-            mdl.WeightEnvelope weightEnvelope = new mdl.WeightEnvelope
-            {
-                Id = Guid.NewGuid().ToString(),
-                DocumentType = "Sleep",
-                Weight = new mdl.Weight
-                {
-                    Date = "2019-12-31"
-                }
-            };
+            var fixture = new Fixture();
+            mdl.WeightEnvelope weightEnvelope = fixture.Create<mdl.WeightEnvelope>();
             weightEnvelopes.Add(weightEnvelope);
             byte[] byteArray = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(weightEnvelopes));
             MemoryStream memoryStream = new MemoryStream(byteArray);

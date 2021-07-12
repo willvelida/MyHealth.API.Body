@@ -70,7 +70,7 @@ namespace MyHealth.API.Body.UnitTests.FunctionTests
         }
 
         [Fact]
-        public async Task ThrowNotFoundResultWhenSleepEnvelopeResponseIsNull()
+        public async Task ThrowNotFoundResultWhenWeightEnvelopeResponseIsNull()
         {
             // Arrange
             var weightEnvelope = new mdl.WeightEnvelope();
@@ -92,7 +92,7 @@ namespace MyHealth.API.Body.UnitTests.FunctionTests
         }
 
         [Fact]
-        public async Task ReturnOkObjectResultWhenSleepRecordIsFound()
+        public async Task ReturnOkObjectResultWhenWeightRecordIsFound()
         {
             // Arrange
             mdl.WeightEnvelope weightEnvelope = new mdl.WeightEnvelope
@@ -121,7 +121,7 @@ namespace MyHealth.API.Body.UnitTests.FunctionTests
         }
 
         [Fact]
-        public async Task Throw500InternalServerErrorStatusCodeWhenSleepDbServiceThrowsException()
+        public async Task Throw500InternalServerErrorStatusCodeWhenBodyDbServiceThrowsException()
         {
             // Arrange
             var weightEnvelope = new mdl.WeightEnvelope();

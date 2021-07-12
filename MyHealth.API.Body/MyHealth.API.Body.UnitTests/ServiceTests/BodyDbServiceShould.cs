@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using AutoFixture;
+using FluentAssertions;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -40,15 +41,8 @@ namespace MyHealth.API.Body.UnitTests.ServiceTests
         {
             // Arrange
             List<mdl.WeightEnvelope> weightEnvelopes = new List<mdl.WeightEnvelope>();
-            mdl.WeightEnvelope weightEnvelope = new mdl.WeightEnvelope
-            {
-                Id = Guid.NewGuid().ToString(),
-                DocumentType = "Sleep",
-                Weight = new mdl.Weight
-                {
-                    Date = "2019-12-31"
-                }
-            };
+            var fixture = new Fixture();
+            mdl.WeightEnvelope weightEnvelope = fixture.Create<mdl.WeightEnvelope>();
             weightEnvelopes.Add(weightEnvelope);
 
             _mockContainer.SetupItemQueryIteratorMock(weightEnvelopes);
