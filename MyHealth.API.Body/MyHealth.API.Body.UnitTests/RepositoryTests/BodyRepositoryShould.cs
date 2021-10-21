@@ -3,26 +3,25 @@ using FluentAssertions;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Moq;
-using MyHealth.API.Body.Services;
+using MyHealth.API.Body.Repository;
 using MyHealth.API.Body.UnitTests.TestHelpers;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using mdl = MyHealth.Common.Models;
 
-namespace MyHealth.API.Body.UnitTests.ServiceTests
+namespace MyHealth.API.Body.UnitTests.RepositoryTests
 {
-    public class BodyDbServiceShould
+    public class BodyRepositoryShould
     {
         private Mock<CosmosClient> _mockCosmosClient;
         private Mock<Container> _mockContainer;
         private Mock<IConfiguration> _mockConfiguration;
 
-        private BodyDbService _sut;
+        private BodyRepository _sut;
 
-        public BodyDbServiceShould()
+        public BodyRepositoryShould()
         {
             _mockCosmosClient = new Mock<CosmosClient>();
             _mockContainer = new Mock<Container>();
@@ -31,9 +30,7 @@ namespace MyHealth.API.Body.UnitTests.ServiceTests
             _mockConfiguration.Setup(x => x["DatabaseName"]).Returns("db");
             _mockConfiguration.Setup(x => x["ContainerName"]).Returns("col");
 
-            _sut = new BodyDbService(
-                _mockConfiguration.Object,
-                _mockCosmosClient.Object);
+            _sut = new BodyRepository(_mockConfiguration.Object, _mockCosmosClient.Object);
         }
 
         [Fact]
@@ -49,7 +46,7 @@ namespace MyHealth.API.Body.UnitTests.ServiceTests
             _mockContainer.SetupItemQueryIteratorMock(new List<int>() { weightEnvelopes.Count });
 
             // Act
-            var response = await _sut.GetWeightRecords();
+            var response = await _sut.ReadAllWeightRecords();
 
             // Assert
             Assert.Equal(weightEnvelopes.Count, response.Count);
@@ -65,7 +62,7 @@ namespace MyHealth.API.Body.UnitTests.ServiceTests
             _mockContainer.SetupItemQueryIteratorMock(new List<int>() { weightEnvelopes.Count });
 
             // Act
-            var response = await _sut.GetWeightRecords();
+            var response = await _sut.ReadAllWeightRecords();
 
             // Assert
             Assert.Equal(weightEnvelopes.Count, response.Count);
@@ -83,7 +80,7 @@ namespace MyHealth.API.Body.UnitTests.ServiceTests
             .Throws(new Exception());
 
             // Act
-            Func<Task> responseAction = async () => await _sut.GetWeightRecords();
+            Func<Task> responseAction = async () => await _sut.ReadAllWeightRecords();
 
             // Assert
             await responseAction.Should().ThrowAsync<Exception>();
@@ -111,7 +108,7 @@ namespace MyHealth.API.Body.UnitTests.ServiceTests
             var weightDate = weightEnvelope.Weight.Date;
 
             // Act
-            var response = await _sut.GetWeightRecordByDate(weightDate);
+            var response = await _sut.ReadWeightRecordByDate(weightDate);
 
             // Assert
             Assert.Equal(weightDate, response.Weight.Date);
@@ -128,7 +125,7 @@ namespace MyHealth.API.Body.UnitTests.ServiceTests
             _mockContainer.SetupItemQueryIteratorMock(new List<int>() { 0 });
 
             // Act
-            var response = await _sut.GetWeightRecordByDate("2019-12-31");
+            var response = await _sut.ReadWeightRecordByDate("2019-12-31");
 
             // Assert
             Assert.Null(response);
@@ -145,7 +142,7 @@ namespace MyHealth.API.Body.UnitTests.ServiceTests
             .Throws(new Exception());
 
             // Act
-            Func<Task> responseAction = async () => await _sut.GetWeightRecordByDate("2019-12-31");
+            Func<Task> responseAction = async () => await _sut.ReadWeightRecordByDate("2019-12-31");
 
             // Assert
             await responseAction.Should().ThrowAsync<Exception>();

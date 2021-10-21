@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using MyHealth.API.Body.Functions;
-using MyHealth.API.Body.Services;
+using MyHealth.API.Body.Services.Interfaces;
 using MyHealth.Common;
 using Newtonsoft.Json;
 using System;
@@ -20,26 +20,27 @@ namespace MyHealth.API.Body.UnitTests.FunctionTests
 {
     public class GetAllWeightLogsShould
     {
-        private Mock<IBodyDbService> _mockBodyDbService;
+        private Mock<IBodyService> _mockBodyService;
         private Mock<IServiceBusHelpers> _mockServiceBusHelpers;
         private Mock<IConfiguration> _mockConfiguration;
         private Mock<HttpRequest> _mockHttpRequest;
-        private Mock<ILogger> _mockLogger;
+        private Mock<ILogger<GetAllWeightLogs>> _mockLogger;
 
         private GetAllWeightLogs _func;
 
         public GetAllWeightLogsShould()
         {
-            _mockBodyDbService = new Mock<IBodyDbService>();
+            _mockBodyService = new Mock<IBodyService>();
             _mockServiceBusHelpers = new Mock<IServiceBusHelpers>();
             _mockConfiguration = new Mock<IConfiguration>();
             _mockHttpRequest = new Mock<HttpRequest>();
-            _mockLogger = new Mock<ILogger>();
+            _mockLogger = new Mock<ILogger<GetAllWeightLogs>>();
 
             _func = new GetAllWeightLogs(
-                _mockBodyDbService.Object,
+                _mockBodyService.Object,
                 _mockServiceBusHelpers.Object,
-                _mockConfiguration.Object);
+                _mockConfiguration.Object,
+                _mockLogger.Object);
         }
 
         [Fact]
@@ -54,10 +55,10 @@ namespace MyHealth.API.Body.UnitTests.FunctionTests
             MemoryStream memoryStream = new MemoryStream(byteArray);
             _mockHttpRequest.Setup(r => r.Body).Returns(memoryStream);
 
-            _mockBodyDbService.Setup(x => x.GetWeightRecords()).ReturnsAsync(weightEnvelopes);
+            _mockBodyService.Setup(x => x.GetWeightRecords()).ReturnsAsync(weightEnvelopes);
 
             // Act
-            var response = await _func.Run(_mockHttpRequest.Object, _mockLogger.Object);
+            var response = await _func.Run(_mockHttpRequest.Object);
 
             // Assert
             Assert.Equal(typeof(OkObjectResult), response.GetType());
@@ -73,10 +74,10 @@ namespace MyHealth.API.Body.UnitTests.FunctionTests
             MemoryStream memoryStream = new MemoryStream(byteArray);
             _mockHttpRequest.Setup(r => r.Body).Returns(memoryStream);
 
-            _mockBodyDbService.Setup(x => x.GetWeightRecords()).ReturnsAsync(weightEnvelopes);
+            _mockBodyService.Setup(x => x.GetWeightRecords()).ReturnsAsync(weightEnvelopes);
 
             // Act
-            var response = await _func.Run(_mockHttpRequest.Object, _mockLogger.Object);
+            var response = await _func.Run(_mockHttpRequest.Object);
 
             // Assert
             Assert.Equal(typeof(OkObjectResult), response.GetType());
@@ -89,10 +90,10 @@ namespace MyHealth.API.Body.UnitTests.FunctionTests
             // Arrange
             MemoryStream memoryStream = new MemoryStream();
             _mockHttpRequest.Setup(r => r.Body).Returns(memoryStream);
-            _mockBodyDbService.Setup(x => x.GetWeightRecords()).Returns(Task.FromResult<List<mdl.WeightEnvelope>>(null));
+            _mockBodyService.Setup(x => x.GetWeightRecords()).Returns(Task.FromResult<List<mdl.WeightEnvelope>>(null));
 
             // Act
-            var response = await _func.Run(_mockHttpRequest.Object, _mockLogger.Object);
+            var response = await _func.Run(_mockHttpRequest.Object);
 
             // Assert
             Assert.Equal(typeof(NotFoundResult), response.GetType());
@@ -110,10 +111,10 @@ namespace MyHealth.API.Body.UnitTests.FunctionTests
             MemoryStream memoryStream = new MemoryStream(byteArray);
             _mockHttpRequest.Setup(r => r.Body).Returns(memoryStream);
 
-            _mockBodyDbService.Setup(x => x.GetWeightRecords()).ThrowsAsync(new Exception());
+            _mockBodyService.Setup(x => x.GetWeightRecords()).ThrowsAsync(new Exception());
 
             // Act
-            var response = await _func.Run(_mockHttpRequest.Object, _mockLogger.Object);
+            var response = await _func.Run(_mockHttpRequest.Object);
 
             // Assert
             Assert.Equal(typeof(StatusCodeResult), response.GetType());

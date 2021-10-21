@@ -4,7 +4,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using MyHealth.API.Body.Services;
+using MyHealth.API.Body.Services.Interfaces;
 using MyHealth.Common;
 using System;
 using System.Collections.Generic;
@@ -15,24 +15,26 @@ namespace MyHealth.API.Body.Functions
 {
     public class GetAllWeightLogs
     {
-        private readonly IBodyDbService _bodyDbService;
+        private readonly IBodyService _bodyService;
         private readonly IServiceBusHelpers _serviceBusHelpers;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<GetAllWeightLogs> _logger;
 
         public GetAllWeightLogs(
-            IBodyDbService bodyDbService,
+            IBodyService bodyService,
             IServiceBusHelpers serviceBusHelpers,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ILogger<GetAllWeightLogs> logger)
         {
-            _bodyDbService = bodyDbService ?? throw new ArgumentNullException(nameof(bodyDbService));
-            _serviceBusHelpers = serviceBusHelpers ?? throw new ArgumentNullException(nameof(serviceBusHelpers));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _bodyService = bodyService;
+            _serviceBusHelpers = serviceBusHelpers;
+            _configuration = configuration;
+            _logger = logger;
         }
 
         [FunctionName(nameof(GetAllWeightLogs))]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "Weight")] HttpRequest req,
-            ILogger log)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "Weight")] HttpRequest req)
         {
             IActionResult result;
 
@@ -40,7 +42,7 @@ namespace MyHealth.API.Body.Functions
             {
                 List<mdl.Weight> weights = new List<mdl.Weight>();
 
-                var weightResponses = await _bodyDbService.GetWeightRecords();
+                var weightResponses = await _bodyService.GetWeightRecords();
 
                 if (weightResponses == null)
                 {
@@ -57,7 +59,7 @@ namespace MyHealth.API.Body.Functions
             }
             catch (Exception ex)
             {
-                log.LogError($"Internal Server Error. Exception thrown: {ex.Message}");
+                _logger.LogError($"Internal Server Error. Exception thrown: {ex.Message}");
                 await _serviceBusHelpers.SendMessageToQueue(_configuration["ExceptionQueue"], ex);
                 result = new StatusCodeResult(StatusCodes.Status500InternalServerError);
             }

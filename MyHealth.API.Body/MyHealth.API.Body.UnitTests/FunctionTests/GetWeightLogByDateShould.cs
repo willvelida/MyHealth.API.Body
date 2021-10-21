@@ -4,12 +4,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using MyHealth.API.Body.Functions;
-using MyHealth.API.Body.Services;
-using MyHealth.API.Body.Validators;
+using MyHealth.API.Body.Services.Interfaces;
 using MyHealth.Common;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,29 +18,27 @@ namespace MyHealth.API.Body.UnitTests.FunctionTests
 {
     public class GetWeightLogByDateShould
     {
-        private Mock<IBodyDbService> _mockBodyDbService;
-        private Mock<IDateValidator> _mockDateValidator;
+        private Mock<IBodyService> _mockBodyService;
         private Mock<IServiceBusHelpers> _mockServiceBusHelpers;
         private Mock<IConfiguration> _mockConfiguration;
         private Mock<HttpRequest> _mockHttpRequest;
-        private Mock<ILogger> _mockLogger;
+        private Mock<ILogger<GetWeightLogByDate>> _mockLogger;
 
         private GetWeightLogByDate _func;
 
         public GetWeightLogByDateShould()
         {
-            _mockBodyDbService = new Mock<IBodyDbService>();
-            _mockDateValidator = new Mock<IDateValidator>();
+            _mockBodyService = new Mock<IBodyService>();
             _mockServiceBusHelpers = new Mock<IServiceBusHelpers>();
             _mockConfiguration = new Mock<IConfiguration>();
             _mockHttpRequest = new Mock<HttpRequest>();
-            _mockLogger = new Mock<ILogger>();
+            _mockLogger = new Mock<ILogger<GetWeightLogByDate>>();
 
             _func = new GetWeightLogByDate(
-                _mockBodyDbService.Object,
-                _mockDateValidator.Object,
+                _mockBodyService.Object,
                 _mockServiceBusHelpers.Object,
-                _mockConfiguration.Object);
+                _mockConfiguration.Object,
+                _mockLogger.Object);
         }
 
         [Theory]
@@ -57,10 +53,10 @@ namespace MyHealth.API.Body.UnitTests.FunctionTests
             MemoryStream memoryStream = new MemoryStream(byteArray);
             _mockHttpRequest.Setup(r => r.Body).Returns(memoryStream);
 
-            _mockDateValidator.Setup(x => x.IsWeightLogDateValid(invalidDateInput)).Returns(false);
+            _mockBodyService.Setup(x => x.IsWeightLogDateValid(invalidDateInput)).Returns(false);
 
             // Act
-            var response = await _func.Run(_mockHttpRequest.Object, _mockLogger.Object, invalidDateInput);
+            var response = await _func.Run(_mockHttpRequest.Object, invalidDateInput);
 
             // Assert
             Assert.Equal(typeof(BadRequestResult), response.GetType());
@@ -78,11 +74,11 @@ namespace MyHealth.API.Body.UnitTests.FunctionTests
             MemoryStream memoryStream = new MemoryStream(byteArray);
             _mockHttpRequest.Setup(r => r.Body).Returns(memoryStream);
 
-            _mockDateValidator.Setup(x => x.IsWeightLogDateValid(It.IsAny<string>())).Returns(true);
-            _mockBodyDbService.Setup(x => x.GetWeightRecordByDate(It.IsAny<string>())).Returns(Task.FromResult<mdl.WeightEnvelope>(null));
+            _mockBodyService.Setup(x => x.IsWeightLogDateValid(It.IsAny<string>())).Returns(true);
+            _mockBodyService.Setup(x => x.GetWeightRecordByDate(It.IsAny<string>())).Returns(Task.FromResult<mdl.WeightEnvelope>(null));
 
             // Act
-            var response = await _func.Run(_mockHttpRequest.Object, _mockLogger.Object, "2019-12-31");
+            var response = await _func.Run(_mockHttpRequest.Object,"2019-12-31");
 
             // Assert
             Assert.Equal(typeof(NotFoundResult), response.GetType());
@@ -109,11 +105,11 @@ namespace MyHealth.API.Body.UnitTests.FunctionTests
             MemoryStream memoryStream = new MemoryStream(byteArray);
             _mockHttpRequest.Setup(r => r.Body).Returns(memoryStream);
 
-            _mockDateValidator.Setup(x => x.IsWeightLogDateValid(weightDate)).Returns(true);
-            _mockBodyDbService.Setup(x => x.GetWeightRecordByDate(weightDate)).ReturnsAsync(weightEnvelope);
+            _mockBodyService.Setup(x => x.IsWeightLogDateValid(weightDate)).Returns(true);
+            _mockBodyService.Setup(x => x.GetWeightRecordByDate(weightDate)).ReturnsAsync(weightEnvelope);
 
             // Act
-            var response = await _func.Run(_mockHttpRequest.Object, _mockLogger.Object, weightDate);
+            var response = await _func.Run(_mockHttpRequest.Object,weightDate);
 
             // Assert
             Assert.Equal(typeof(OkObjectResult), response.GetType());
@@ -129,11 +125,11 @@ namespace MyHealth.API.Body.UnitTests.FunctionTests
             MemoryStream memoryStream = new MemoryStream(byteArray);
             _mockHttpRequest.Setup(r => r.Body).Returns(memoryStream);
 
-            _mockDateValidator.Setup(x => x.IsWeightLogDateValid(It.IsAny<string>())).Returns(true);
-            _mockBodyDbService.Setup(x => x.GetWeightRecordByDate(It.IsAny<string>())).ThrowsAsync(new Exception());
+            _mockBodyService.Setup(x => x.IsWeightLogDateValid(It.IsAny<string>())).Returns(true);
+            _mockBodyService.Setup(x => x.GetWeightRecordByDate(It.IsAny<string>())).ThrowsAsync(new Exception());
 
             // Act
-            var response = await _func.Run(_mockHttpRequest.Object, _mockLogger.Object, "2019-12-31");
+            var response = await _func.Run(_mockHttpRequest.Object, "2019-12-31");
 
             // Assert
             Assert.Equal(typeof(StatusCodeResult), response.GetType());
